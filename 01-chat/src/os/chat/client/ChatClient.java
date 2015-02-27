@@ -1,6 +1,13 @@
 package os.chat.client;
 
 
+import os.chat.server.ChatServerManager;
+import os.chat.server.ChatServerManagerInterface;
+
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.util.Vector;
 
 
@@ -16,6 +23,9 @@ public class ChatClient implements CommandsFromWindow,CommandsFromServer {
 	 * In return, the GUI will use the CommandsFromWindow interface to call methods to the ChatClient implementation.
 	 */
 	private final CommandsToWindow window ;
+
+    private Registry registry;
+    private ChatServerManagerInterface server;
 	
 	/**
 	 * Constructor for the ChatClient. Must perform the connection to the server. If the connection is not successful, it must exit with an error.
@@ -24,13 +34,14 @@ public class ChatClient implements CommandsFromWindow,CommandsFromServer {
 	public ChatClient(CommandsToWindow window, String userName) {
 		this.window = window;
 		this.userName = userName;
-		
-		System.err.println("TODO: implement ChatClient constructor and connection to the server");
-		
-		/*
-		 * TODO implement constructor
-		 */
-	}
+
+        try {
+            registry = LocateRegistry.getRegistry();
+            server = (ChatServerManagerInterface) registry.lookup(ChatServerManager.CHAT_SERVER_MANAGER_RMI_REG);
+        } catch (RemoteException | NotBoundException e) {
+            e.printStackTrace();
+        }
+    }
 
 	/*
 	 * Implementation of the functions from the CommandsFromWindow interface.
@@ -47,15 +58,13 @@ public class ChatClient implements CommandsFromWindow,CommandsFromServer {
 	}
 
 	public Vector<String> getChatRoomsList() {
-		
-		System.err.println("TODO: getChatRoomsList is not implemented.");
-
-		/*
-		 * TODO implement the method to receive a list of available chat rooms from the server.
-		 */		
-		
-		return null;
-	}
+        try {
+            return server.getRoomsList();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 	
 	public boolean joinChatRoom(String roomName) {
 		
