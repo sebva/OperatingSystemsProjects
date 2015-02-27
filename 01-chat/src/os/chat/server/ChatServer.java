@@ -1,5 +1,9 @@
 package os.chat.server;
 
+import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.Vector;
 import os.chat.client.CommandsFromServer;
 
@@ -11,9 +15,11 @@ import os.chat.client.CommandsFromServer;
  * A ChatServerManager will then be responsible for creating new rooms are they are added. 
  */
 public class ChatServer implements ChatServerInterface {
-	
-	private String roomName;
+
+    private static final String CHAT_SERVER_RMI_REG_PREFIX = "room_";
+    private String roomName;
 	private Vector<CommandsFromServer> registeredClients;
+    private Registry registry;
 	
 	/**
 	 * Constructor: initializes the chat room and register it to the RMI registry
@@ -21,11 +27,17 @@ public class ChatServer implements ChatServerInterface {
 	 */
 	public ChatServer(String roomName){
 		this.roomName = roomName;
-		registeredClients = new Vector<CommandsFromServer>();
-		
-		/*
-		 * TODO register the ChatServer to the RMI registry
-		 */
+		registeredClients = new Vector<>();
+
+        // Register the ChatServer to the RMI registry
+        try {
+            ChatServerInterface stub = (ChatServerInterface) UnicastRemoteObject.exportObject(this, 0);
+            registry = LocateRegistry.getRegistry();
+            registry.rebind(CHAT_SERVER_RMI_REG_PREFIX + roomName, stub);
+            System.out.println("Room " + roomName + " registered");
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
 	}
 	
 	public void publish(String message, String publisher) {
@@ -38,21 +50,13 @@ public class ChatServer implements ChatServerInterface {
 	}
 
 	public void register(CommandsFromServer client) {
-		
-		System.err.println("TODO: register is not implemented");
-		
-		/*
-		 * TODO register the client
-		 */
+		registeredClients.add(client);
+		System.out.println("Client registered");
 	}
 
 	public void unregister(CommandsFromServer client) {
-		
-		System.err.println("TODO: unregister is not implemented");
-		
-		/*
-		 * TODO unregister the client
-		 */
+        registeredClients.remove(client);
+        System.out.println("Client unregistered");
 	}
 	
 }
