@@ -45,7 +45,10 @@ public class ChatClient implements CommandsFromWindow, CommandsFromServer {
         this.rooms = new HashMap<>();
 
         try {
+            // Local server
             registry = LocateRegistry.getRegistry();
+            // Remote server
+            //registry = LocateRegistry.getRegistry("130.125.117.65");
             server = (ChatServerManagerInterface) registry.lookup(ChatServerManager.CHAT_SERVER_MANAGER_RMI_REG);
         } catch (RemoteException | NotBoundException e) {
             e.printStackTrace();
