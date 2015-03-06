@@ -4,6 +4,7 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.Iterator;
 import java.util.Vector;
 import os.chat.client.CommandsFromServer;
 
@@ -16,7 +17,7 @@ import os.chat.client.CommandsFromServer;
  */
 public class ChatServer implements ChatServerInterface {
 
-    private static final String CHAT_SERVER_RMI_REG_PREFIX = "room_";
+    public static final String CHAT_SERVER_RMI_REG_PREFIX = "room_";
     private String roomName;
 	private Vector<CommandsFromServer> registeredClients;
     private Registry registry;
@@ -41,13 +42,17 @@ public class ChatServer implements ChatServerInterface {
 	}
 	
 	public void publish(String message, String publisher) {
-		
-		System.err.println("TODO: publish is not implemented");
-		
-		/*
-		 * TODO send the message to all registered clients
-		 */
-	}
+        for (Iterator<CommandsFromServer> iterator = registeredClients.iterator(); iterator.hasNext(); ) {
+            CommandsFromServer client = iterator.next();
+            try {
+                String messageToDisplay = publisher + "> " + message;
+                client.receiveMsg(roomName, messageToDisplay);
+            } catch (RemoteException e) {
+                System.err.println("Client unreachable, removing...");
+                iterator.remove();
+            }
+        }
+    }
 
 	public void register(CommandsFromServer client) {
 		registeredClients.add(client);

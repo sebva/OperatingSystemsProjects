@@ -1,6 +1,8 @@
 package os.chat.client;
 
 
+import os.chat.server.ChatServer;
+import os.chat.server.ChatServerInterface;
 import os.chat.server.ChatServerManager;
 import os.chat.server.ChatServerManagerInterface;
 
@@ -8,6 +10,9 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Vector;
 
 
@@ -26,14 +31,17 @@ public class ChatClient implements CommandsFromWindow,CommandsFromServer {
 
     private Registry registry;
     private ChatServerManagerInterface server;
-	
-	/**
+    private Map<String, ChatServerInterface> rooms;
+    private CommandsFromServer stub;
+
+    /**
 	 * Constructor for the ChatClient. Must perform the connection to the server. If the connection is not successful, it must exit with an error.
 	 * @param window
 	 */
 	public ChatClient(CommandsToWindow window, String userName) {
 		this.window = window;
 		this.userName = userName;
+        this.rooms = new HashMap<>();
 
         try {
             registry = LocateRegistry.getRegistry();
@@ -49,13 +57,12 @@ public class ChatClient implements CommandsFromWindow,CommandsFromServer {
 	 */
 
 	public void sendText(String roomName, String message) {
-
-		System.err.println("TODO: sendText is not implemented.");
-
-		/*
-		 * TODO implement the method to send the message to the server.
-		 */
-	}
+        try {
+            getRoom(roomName).publish(message, userName);
+        } catch (RemoteException | NotBoundException e) {
+            e.printStackTrace();
+        }
+    }
 
 	public Vector<String> getChatRoomsList() {
         try {
@@ -67,36 +74,49 @@ public class ChatClient implements CommandsFromWindow,CommandsFromServer {
     }
 	
 	public boolean joinChatRoom(String roomName) {
-		
-		System.err.println("TODO: joinChatRoom is not implemented.");
 
-		/*
-		 * TODO implement the method to join a chat room and receive notifications of new messages.
-		 */		
-		
-		return false;		
-	}
+        Vector<String> chatRoomsList = getChatRoomsList();
+        if(chatRoomsList == null || !chatRoomsList.contains(roomName)) {
+            createNewRoom(roomName);
+        }
+
+        ChatServerInterface currentRoom = null;
+        try {
+            currentRoom = getRoom(roomName);
+            currentRoom.register(getStub());
+            return true;
+        } catch (RemoteException | NotBoundException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 	
 	public boolean leaveChatRoom(String roomName) {
-		
-		System.err.println("TODO: leaveChatRoom is not implemented.");
+        try {
+            getRoom(roomName).unregister(getStub());
+            return true;
+        } catch (RemoteException | NotBoundException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 
-		/*
-		 * TODO implement the method to leave a chat room and stop receiving notifications of new messages.
-		 */		
-		
-		return false;
-	}
-		
-	public boolean createNewRoom(String roomName) {
-		
-		System.err.println("TODO: createNewRoom is not implemented.");
+    private CommandsFromServer getStub() throws RemoteException {
+        if(stub == null) {
+            stub = (CommandsFromServer) UnicastRemoteObject.exportObject(this, 0);
+        }
+        return stub;
 
-		/*
-		 * TODO implement the method to ask the server to create a new room (second part of the assignment only).
-		 */		
-		
-		return false;
+    }
+
+    public boolean createNewRoom(String roomName) {
+        try {
+            server.createRoom(roomName);
+            return true;
+        } catch (RemoteException e) {
+            e.printStackTrace();
+            return false;
+        }
 	}
 
 	/*
@@ -107,12 +127,20 @@ public class ChatClient implements CommandsFromWindow,CommandsFromServer {
 	
 
 	public void receiveMsg(String roomName, String message) {
-		
-		System.err.println("TODO: getName is not implemented.");
-		/*
-		 * TODO implement the method to allow server to publish message for client.
-		 */
+		window.publish(roomName, message);
 	}
 		
 	// This class does not contain a main method. You should launch the whole program by launching ChatClientWindow's main method.
+
+
+    private ChatServerInterface getRoom(String roomName) throws RemoteException, NotBoundException {
+        if(rooms.containsKey(roomName)) {
+            return rooms.get(roomName);
+        }
+        else {
+            ChatServerInterface room = (ChatServerInterface) registry.lookup(ChatServer.CHAT_SERVER_RMI_REG_PREFIX + roomName);
+            rooms.put(roomName, room);
+            return room;
+        }
+    }
 }
