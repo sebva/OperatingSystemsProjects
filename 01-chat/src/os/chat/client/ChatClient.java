@@ -16,31 +16,32 @@ import java.util.Map;
 import java.util.Vector;
 
 
-public class ChatClient implements CommandsFromWindow,CommandsFromServer {
+public class ChatClient implements CommandsFromWindow, CommandsFromServer {
 
-	/**
-	 * The name of the user of this client
-	 */
-	private String userName;
-	
-	/**
-	 * The graphical user interface, accessed through its interface.
-	 * In return, the GUI will use the CommandsFromWindow interface to call methods to the ChatClient implementation.
-	 */
-	private final CommandsToWindow window ;
+    /**
+     * The name of the user of this client
+     */
+    private final String userName;
+
+    /**
+     * The graphical user interface, accessed through its interface.
+     * In return, the GUI will use the CommandsFromWindow interface to call methods to the ChatClient implementation.
+     */
+    private final CommandsToWindow window;
 
     private Registry registry;
     private ChatServerManagerInterface server;
-    private Map<String, ChatServerInterface> rooms;
+    private final Map<String, ChatServerInterface> rooms;
     private CommandsFromServer stub;
 
     /**
-	 * Constructor for the ChatClient. Must perform the connection to the server. If the connection is not successful, it must exit with an error.
-	 * @param window
-	 */
-	public ChatClient(CommandsToWindow window, String userName) {
-		this.window = window;
-		this.userName = userName;
+     * Constructor for the ChatClient. Must perform the connection to the server. If the connection is not successful, it must exit with an error.
+     *
+     * @param window Handle to the UI object
+     */
+    public ChatClient(CommandsToWindow window, String userName) {
+        this.window = window;
+        this.userName = userName;
         this.rooms = new HashMap<>();
 
         try {
@@ -51,12 +52,12 @@ public class ChatClient implements CommandsFromWindow,CommandsFromServer {
         }
     }
 
-	/*
-	 * Implementation of the functions from the CommandsFromWindow interface.
-	 * See methods description in the interface definition.
-	 */
-
-	public void sendText(String roomName, String message) {
+    /*
+     * Implementation of the functions from the CommandsFromWindow interface.
+     * See methods description in the interface definition.
+     */
+    @Override
+    public void sendText(String roomName, String message) {
         try {
             getRoom(roomName).publish(message, userName);
         } catch (RemoteException | NotBoundException e) {
@@ -64,7 +65,8 @@ public class ChatClient implements CommandsFromWindow,CommandsFromServer {
         }
     }
 
-	public Vector<String> getChatRoomsList() {
+    @Override
+    public Vector<String> getChatRoomsList() {
         try {
             return server.getRoomsList();
         } catch (RemoteException e) {
@@ -72,15 +74,16 @@ public class ChatClient implements CommandsFromWindow,CommandsFromServer {
             return null;
         }
     }
-	
-	public boolean joinChatRoom(String roomName) {
+
+    @Override
+    public boolean joinChatRoom(String roomName) {
 
         Vector<String> chatRoomsList = getChatRoomsList();
-        if(chatRoomsList == null || !chatRoomsList.contains(roomName)) {
+        if (chatRoomsList == null || !chatRoomsList.contains(roomName)) {
             createNewRoom(roomName);
         }
 
-        ChatServerInterface currentRoom = null;
+        ChatServerInterface currentRoom;
         try {
             currentRoom = getRoom(roomName);
             currentRoom.register(getStub());
@@ -90,8 +93,9 @@ public class ChatClient implements CommandsFromWindow,CommandsFromServer {
             return false;
         }
     }
-	
-	public boolean leaveChatRoom(String roomName) {
+
+    @Override
+    public boolean leaveChatRoom(String roomName) {
         try {
             getRoom(roomName).unregister(getStub());
             return true;
@@ -101,14 +105,7 @@ public class ChatClient implements CommandsFromWindow,CommandsFromServer {
         }
     }
 
-    private CommandsFromServer getStub() throws RemoteException {
-        if(stub == null) {
-            stub = (CommandsFromServer) UnicastRemoteObject.exportObject(this, 0);
-        }
-        return stub;
-
-    }
-
+    @Override
     public boolean createNewRoom(String roomName) {
         try {
             server.createRoom(roomName);
@@ -117,30 +114,39 @@ public class ChatClient implements CommandsFromWindow,CommandsFromServer {
             e.printStackTrace();
             return false;
         }
-	}
+    }
 
 	/*
-	 * Implementation of the functions from the CommandsFromServer interface.
+     * Implementation of the functions from the CommandsFromServer interface.
 	 * See methods description in the interface definition.
 	 */
-	
-	
 
-	public void receiveMsg(String roomName, String message) {
-		window.publish(roomName, message);
-	}
-		
-	// This class does not contain a main method. You should launch the whole program by launching ChatClientWindow's main method.
-
+    @Override
+    public void receiveMsg(String roomName, String message) {
+        window.publish(roomName, message);
+    }
 
     private ChatServerInterface getRoom(String roomName) throws RemoteException, NotBoundException {
-        if(rooms.containsKey(roomName)) {
+        if (rooms.containsKey(roomName)) {
             return rooms.get(roomName);
-        }
-        else {
+        } else {
             ChatServerInterface room = (ChatServerInterface) registry.lookup(ChatServer.CHAT_SERVER_RMI_REG_PREFIX + roomName);
             rooms.put(roomName, room);
             return room;
         }
     }
+
+    /**
+     * Get the stub associated with this object. Export it if necessary.
+     * @return A stub that can be sent to the server
+     * @throws RemoteException Something went wrong with export
+     */
+    private CommandsFromServer getStub() throws RemoteException {
+        if (stub == null) {
+            stub = (CommandsFromServer) UnicastRemoteObject.exportObject(this, 0);
+        }
+        return stub;
+    }
+
+    // This class does not contain a main method. You should launch the whole program by launching ChatClientWindow's main method.
 }
