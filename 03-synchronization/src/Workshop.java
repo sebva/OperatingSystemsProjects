@@ -47,7 +47,7 @@ class Workshop extends Thread {
      */
     public void transform() {
         A.get();
-        try { Thread.sleep(100); } catch(InterruptedException ignored) {}
+        //try { Thread.sleep(100); } catch(InterruptedException ignored) {}
         B.put();
     }
 

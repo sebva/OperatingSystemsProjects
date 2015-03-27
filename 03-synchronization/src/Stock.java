@@ -21,6 +21,10 @@ class Stock {
 	 */
     private int nbItems;
     /**
+     * Maximal number of items permitted
+     */
+    private final int maxNbItems;
+    /**
      * Name of the stock
      */
     private String name;
@@ -31,17 +35,33 @@ class Stock {
      * @param nbItems initial number of items
      */
     public Stock(String name, int nbItems) {
+        this(name, nbItems, Integer.MAX_VALUE);
+    }
+
+    /**
+     * Creates a new Stock object
+     * @param name its name
+     * @param nbItems initial number of items
+     * @param maxNbItems max number of items in this stock
+     */
+    public Stock(String name, int nbItems, int maxNbItems) {
         this.nbItems = nbItems;
-        this.name = name;		
+        this.name = name;
+        this.maxNbItems = maxNbItems;
     }
 
     /**
      * Adds an item
      */
     public synchronized void put() {
+        while (nbItems >= maxNbItems) {
+            try {
+                wait();
+            } catch (InterruptedException ignored) {}
+        }
         nbItems++;
-        notify();
-        display();
+        //display();
+        notifyAll();
     }
 
     /**
@@ -54,7 +74,8 @@ class Stock {
             } catch (InterruptedException ignored) {}
         }
         nbItems--;
-        display();
+        //display();
+        notifyAll();
     }
 
     /**
