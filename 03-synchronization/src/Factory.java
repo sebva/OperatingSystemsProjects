@@ -20,14 +20,18 @@ class Factory {
 	 */
     Stock stockInput = new Stock("input", NB_ITEMS_TO_TRANSFORM);
     /**
+	 * Intermediate stock of items
+	 */
+    Stock stockIntermediate = new Stock("intermediate", 0);
+    /**
      * Stock of final (transformed) items
      */
     Stock stockOutput = new Stock("output", 0);
     /**
      * Workshops for the transformations
      */
-    Workshop workshop1 = new Workshop(stockInput, stockOutput, NB_ITEMS_TO_TRANSFORM / 2);
-    Workshop workshop2 = new Workshop(stockInput, stockOutput, NB_ITEMS_TO_TRANSFORM / 2);
+    Workshop workshop1 = new Workshop(stockInput, stockIntermediate, NB_ITEMS_TO_TRANSFORM);
+    Workshop workshop2 = new Workshop(stockIntermediate, stockOutput, NB_ITEMS_TO_TRANSFORM);
     
     /**
      * Main entry point: proceed to operate the factory work of transformation
