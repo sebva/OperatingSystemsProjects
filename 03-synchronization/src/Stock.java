@@ -40,6 +40,7 @@ class Stock {
      */
     public synchronized void put() {
         nbItems++;
+        display();
     }
 
     /**
@@ -47,16 +48,17 @@ class Stock {
      */
     public synchronized void get() {
         nbItems--;
+        display();
     }
 
     /**
      * Display the stock status
      */
     public void display() {
-        System.out.println("The stock " + name + " contains " + nbItems + " item(s).");
+        System.out.println(Thread.currentThread().getName() + ": The stock " + name + " contains " + nbItems + " item(s).");
     }
 
-    /** 
+    /**
      * Unit test for class Stock
      * @param args Non utilise
      */
