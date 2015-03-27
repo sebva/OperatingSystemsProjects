@@ -40,6 +40,7 @@ class Stock {
      */
     public synchronized void put() {
         nbItems++;
+        notify();
         display();
     }
 
@@ -47,6 +48,11 @@ class Stock {
      * Removes (takes) an item
      */
     public synchronized void get() {
+        while (nbItems <= 0) {
+            try {
+                wait();
+            } catch (InterruptedException ignored) {}
+        }
         nbItems--;
         display();
     }
