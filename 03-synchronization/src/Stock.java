@@ -38,14 +38,14 @@ class Stock {
     /**
      * Adds an item
      */
-    public void put() {
+    public synchronized void put() {
         nbItems++;
     }
 
     /**
      * Removes (takes) an item
      */
-    public void get() {
+    public synchronized void get() {
         nbItems--;
     }
 

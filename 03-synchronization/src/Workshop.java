@@ -15,7 +15,7 @@
  * from Stock A, waits for 100 ms, and puts an element to stock B. The work() method
  * runs nbTransform times the transform() method, nbTransform being set by the constructor.
  */
-class Workshop {
+class Workshop extends Thread {
 
 	/**
 	 * The initial stock
@@ -47,7 +47,7 @@ class Workshop {
      */
     public void transform() {
         A.get();
-        try { Thread.sleep(100); } catch(InterruptedException e) {}
+        //try { Thread.sleep(100); } catch(InterruptedException ignored) {}
         B.put();
     }
 
@@ -59,7 +59,12 @@ class Workshop {
             transform();
     }
 
-    /** 
+    @Override
+    public void run() {
+        work();
+    }
+
+    /**
      * Unit test for class Workshop
      * @param args not used
      */

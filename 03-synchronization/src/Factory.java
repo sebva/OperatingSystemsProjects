@@ -14,10 +14,11 @@
  * of transforming from the former to the latter.
  */
 class Factory {
+    public static final int NB_ITEMS_TO_TRANSFORM = 100_000_000;
 	/**
 	 * Stock of items to transform
 	 */
-    Stock stockInput = new Stock("input", 10);
+    Stock stockInput = new Stock("input", NB_ITEMS_TO_TRANSFORM);
     /**
      * Stock of final (transformed) items
      */
@@ -25,8 +26,8 @@ class Factory {
     /**
      * Workshops for the transformations
      */
-    Workshop workshop1 = new Workshop(stockInput, stockOutput, 5);
-    Workshop workshop2 = new Workshop(stockInput, stockOutput, 5);
+    Workshop workshop1 = new Workshop(stockInput, stockOutput, NB_ITEMS_TO_TRANSFORM / 2);
+    Workshop workshop2 = new Workshop(stockInput, stockOutput, NB_ITEMS_TO_TRANSFORM / 2);
     
     /**
      * Main entry point: proceed to operate the factory work of transformation
@@ -34,9 +35,13 @@ class Factory {
     public void work() {
     	System.out.println("Starting factory work ...");
     	long initialTime = System.currentTimeMillis();
-   		workshop1.work();
-   		workshop2.work();
-   		stockInput.display();
+   		workshop1.start();
+        workshop2.start();
+        try {
+            workshop1.join();
+            workshop2.join();
+        } catch (InterruptedException ignored) {}
+        stockInput.display();
    		stockOutput.display();
    		System.out.println("... done ("+((double)(System.currentTimeMillis() - initialTime)/1000)+" second(s))");
     }
