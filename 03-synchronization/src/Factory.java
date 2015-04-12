@@ -14,7 +14,7 @@
  * of transforming from the former to the latter.
  */
 class Factory {
-    public static final int NB_ITEMS_TO_TRANSFORM = 10_000;
+    public static final int NB_ITEMS_TO_TRANSFORM = 10000;
 	/**
 	 * Stock of items to transform
 	 */
