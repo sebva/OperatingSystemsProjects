@@ -1,0 +1,14 @@
+name t1
+comment Individual workload
+run interactive algorithm FCFS key "FCFS"
+run interactive algorithm RR 1 key "RR_1"
+run interactive algorithm SJF key "SJF"
+run interactive algorithm SJFA 0.5 key "SJFA_0.5"
+run cpu_intensive algorithm FCFS key "FCFS"
+run cpu_intensive algorithm RR 1 key "RR_1"
+run cpu_intensive algorithm SJF key "SJF"
+run cpu_intensive algorithm SJFA 0.5 key "SJFA_0.5"
+run mixed_load algorithm FCFS key "FCFS"
+run mixed_load algorithm RR 1 key "RR_1"
+run mixed_load algorithm SJF key "SJF"
+run mixed_load algorithm SJFA 0.5 key "SJFA_0.5"

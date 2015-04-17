@@ -1,0 +1,13 @@
+name cpu_intensive
+comment CPU intensive
+algorithm FCFS
+seed 10831418
+cstin 0.1
+cstout 0.1
+numprocs 5
+firstarrival 0
+interarrival constant 0.0
+duration constant 40
+cpuburst constant 10
+ioburst exponential 1.5
+basepriority 1

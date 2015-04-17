@@ -1,0 +1,25 @@
+name high_load
+comment High load
+algorithm FCFS
+seed 10831418
+numprocs 500
+firstarrival 0
+interarrival uniform 4 12.5
+duration constant 5
+cpuburst constant 0.5
+ioburst uniform 0 5
+basepriority 1
+numprocs 500
+firstarrival 0
+interarrival uniform 40 45
+duration constant 40
+cpuburst constant 10
+ioburst exponential 1.5
+basepriority 1
+numprocs 500
+firstarrival 0
+interarrival uniform 20 100
+duration constant 20
+cpuburst uniform 1 5
+ioburst uniform 1 5
+basepriority 1

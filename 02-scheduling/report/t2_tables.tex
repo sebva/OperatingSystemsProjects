@@ -1,0 +1,16 @@
+\begin{table}
+\begin{tabular}{ | l | S[round-precision=2] | S[round-precision=3] | S[round-precision=2] S[round-precision=2] | S[round-precision=2] S[round-precision=2] | }
+\hline
+	Workload: & \multicolumn{6}{c |}{Interactive \&{} CPU intensive} \\ \hline
+	& & & \multicolumn{2}{c |}{turnaround time} & \multicolumn{2}{c |}{waiting time} \\
+	Scheduler & {CPU util.} & {throughput} & {$\overline{x}$} & {$\sigma$} & {$\overline{x}$} & {$\sigma$} \\ \hline
+	 
+	FCFS & 0.977120 & 0.043428 & 208.88 & 21.32 & 171.55 & 2.91 \\ \hline
+	Round Robin & 1 & 0.044444 & 152.3 & 69.62 & 114.97 & 6.1 \\ \hline
+	SJF & 1 & 0.044444 & 150.9 & 55.49 & 113.57 & 4.68 \\ \hline
+	SJFA & 1 & 0.044444 & 165.1 & 41.61 & 127.77 & 3.33 \\
+	
+\hline
+\end{tabular}
+\caption{T2 tables}
+\end{table}

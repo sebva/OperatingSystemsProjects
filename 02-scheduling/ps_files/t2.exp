@@ -1,0 +1,6 @@
+name t2
+comment Mixing workloads
+run cpu_intensive-interactive algorithm FCFS key "FCFS"
+run cpu_intensive-interactive algorithm RR 1 key "RR_1"
+run cpu_intensive-interactive algorithm SJF key "SJF"
+run cpu_intensive-interactive algorithm SJFA 0.5 key "SJFA_0.5"

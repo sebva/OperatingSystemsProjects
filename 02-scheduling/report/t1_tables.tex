@@ -1,0 +1,36 @@
+\begin{table}
+\begin{tabular}{ | l | S[round-precision=2] | S[round-precision=3] | S[round-precision=2] S[round-precision=2] | S[round-precision=2] S[round-precision=2] | }
+\hline
+	Workload: & \multicolumn{6}{c |}{Interactive} \\ \hline
+	& & & \multicolumn{2}{c |}{turnaround time} & \multicolumn{2}{c |}{waiting time} \\
+	Scheduler & {CPU util.} & {throughput} & {$\overline{x}$} & {$\sigma$} & {$\overline{x}$} & {$\sigma$} \\ \hline
+	 
+	FCFS & 0.678446 & 0.135689 & 32.09 & 5.32 & 3.32 & 0.1 \\ \hline
+	Round Robin & 0.678446 & 0.135689 & 32.09 & 5.32 & 3.32 & 0.1 \\ \hline
+	SJF & 0.678446 & 0.135689 & 32.09 & 5.32 & 3.32 & 0.1 \\ \hline
+	SJFA & 0.68316 & 0.136632 & 31.62 & 5.16 & 2.85 & 0.19 \\ \hline \hline
+	
+
+	Workload: & \multicolumn{6}{c |}{CPU intensive} \\ \hline
+	& & & \multicolumn{2}{c |}{turnaround time} & \multicolumn{2}{c |}{waiting time} \\
+	Scheduler & {CPU util.} & {throughput} & {$\overline{x}$} & {$\sigma$} & {$\overline{x}$} & {$\sigma$} \\ \hline
+	 
+	FCFS & 1 & 0.25 & 180.0 & 14.14 & 135.73 & 2.52 \\ \hline
+	Round Robin & 1 & 0.25 & 196.2 & 3.19 & 151.93 & 0.29 \\ \hline
+	SJF & 1 & 0.25 & 180.0 & 14.14 & 135.73 & 2.52 \\ \hline	
+	SJFA & 1 & 0.25 & 180.0 & 14.14 & 135.73 & 2.52 \\ \hline \hline
+	
+
+	Workload: & \multicolumn{6}{c |}{Mixed load} \\ \hline
+	& & & \multicolumn{2}{c |}{turnaround time} & \multicolumn{2}{c |}{waiting time} \\
+	Scheduler & {CPU util.} & {throughput} & {$\overline{x}$} & {$\sigma$} & {$\overline{x}$} & {$\sigma$} \\ \hline
+	 
+ 	FCFS & 0.939852 & 0.046993 & 95.71 & 5.87 & 58.59 & 0.75 \\ \hline
+	Round Robin & 0.960488 & 0.048024 & 98.74 & 2.73 & 61.63 & 0.35 \\ \hline
+	SJF & 0.959795 & 0.04799 & 81.47 & 21.16 & 44.36 & 4.02 \\ \hline
+	SJFA & 0.97665 & 0.048832 & 96.66 & 3.47 & 59.54 & 1.05 \\ \hline
+	
+	
+\end{tabular}
+\caption{T1 tables}
+\end{table}

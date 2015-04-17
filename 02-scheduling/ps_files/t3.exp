@@ -1,0 +1,17 @@
+name t3
+comment Varying Round Robin time slice
+run interactive algorithm RR 0.1 key "RR_01"
+run interactive algorithm RR 0.5 key "RR_05"
+run interactive algorithm RR 1 key "RR_1"
+run interactive algorithm RR 5 key "RR_5"
+run interactive algorithm RR 10 key "RR_10"
+run cpu_intensive algorithm RR 0.1 key "RR_01"
+run cpu_intensive algorithm RR 0.5 key "RR_05"
+run cpu_intensive algorithm RR 1 key "RR_1"
+run cpu_intensive algorithm RR 5 key "RR_5"
+run cpu_intensive algorithm RR 10 key "RR_10"
+run mixed_load algorithm RR 0.1 key "RR_01"
+run mixed_load algorithm RR 0.5 key "RR_05"
+run mixed_load algorithm RR 1 key "RR_1"
+run mixed_load algorithm RR 5 key "RR_5"
+run mixed_load algorithm RR 10 key "RR_10"

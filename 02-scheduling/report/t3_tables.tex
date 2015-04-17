@@ -1,0 +1,73 @@
+\begin{table}
+\begin{tabular}{ | l | S[round-precision=2] | S[round-precision=3] | S[round-precision=2] S[round-precision=2] | S[round-precision=2] S[round-precision=2] | }
+\hline
+	Workload: & \multicolumn{6}{c |}{Interactive} \\ \hline
+	& & & \multicolumn{2}{c |}{turnaround time} & \multicolumn{2}{c |}{waiting time} \\
+	Time slice & {CPU util.} & {throughput} & {$\overline{x}$} & {$\sigma$} & {$\overline{x}$} & {$\sigma$} \\ \hline
+
+	0.1 & 0.657604 & 0.131521 & 33.47 & 4.99 & 4.70 & 0.14 \\ \hline
+	0.5 & 0.678446 & 0.135689 & 32.09 & 5.32 & 3.32 & 0.10 \\ \hline
+	1 & 0.678446 & 0.135689 & 32.09 & 5.32 & 3.32 & 0.10 \\ \hline
+	5 & 0.678446 & 0.135689 & 32.09 & 5.32 & 3.32 & 0.10 \\ \hline
+	10 & 0.678446 & 0.135689 & 32.09 & 5.32 & 3.32 & 0.10 \\ \hline \hline
+
+	Workload: & \multicolumn{6}{c |}{CPU intensive} \\ \hline
+	& & & \multicolumn{2}{c |}{turnaround time} & \multicolumn{2}{c |}{waiting time} \\
+	Time slice & {CPU util.} & {throughput} & {$\overline{x}$} & {$\sigma$} & {$\overline{x}$} & {$\sigma$} \\ \hline
+
+	0.1 & 1 & 0.25 & 197.4 & 2.84 & 153.13 & 0.12 \\ \hline
+	0.5 & 1 & 0.25 & 197.0 & 2.74 & 152.73 & 0.09 \\ \hline
+	1 & 1 & 0.25 & 169.20 & 3.19 & 151.93 & 0.29 \\ \hline
+	5 & 1 & 0.25 & 190.0 & 7.07 & 145.73 & 1.13 \\ \hline
+	10 & 1 & 0.25 & 180.0 & 14.14 & 135.73 & 2.52 \\ \hline \hline
+
+	Workload: & \multicolumn{6}{c |}{Mixed load} \\ \hline
+	& & & \multicolumn{2}{c |}{turnaround time} & \multicolumn{2}{c |}{waiting time} \\
+	Time slice & {CPU util.} & {throughput} & {$\overline{x}$} & {$\sigma$} & {$\overline{x}$} & {$\sigma$} \\ \hline
+
+	0.1 & 0.966033 & 0.048302 & 98.7 & 2.52 & 61.58 & 0.38 \\ \hline
+	0.5 & 0.942695 & 0.047135 & 98.8 & 3.8 & 61.69 & 0.25 \\ \hline
+	1 & 0.960488 & 0.048024 & 98.74 & 2.73 & 61.63 & 0.35 \\ \hline
+	5 & 0.939852 & 0.046993 & 95.71 & 5.87 & 58.59 & 0.75 \\ \hline
+	10 & 0.939852 & 0.046993 & 95.71 & 5.87 & 58.59 & 0.75 \\ \hline
+	
+\end{tabular}
+\caption{T3 tables, without context switch time}
+\end{table}
+
+\begin{table}
+\begin{tabular}{ | l | S[round-precision=2] | S[round-precision=3] | S[round-precision=2] S[round-precision=2] | S[round-precision=2] S[round-precision=2] | }
+\hline
+	Workload: & \multicolumn{6}{c |}{Interactive} \\ \hline
+	& & & \multicolumn{2}{c |}{turnaround time} & \multicolumn{2}{c |}{waiting time} \\
+	Time slice & {CPU util.} & {throughput} & {$\overline{x}$} & {$\sigma$} & {$\overline{x}$} & {$\sigma$} \\ \hline
+
+	0.1 & 0.315830 & 0.063166 & 73.39 & 6.77 & 39.38 & 0.49 \\ \hline
+	0.5 & 0.602998 & 0.1206 & 35.7 & 5.22 & 6.03 & 0.23 \\ \hline
+	1 & 0.602998 & 0.1206 & 35.7 & 5.22 & 6.03 & 0.23 \\ \hline
+	5 & 0.602998 & 0.1206 & 35.7 & 5.22 & 6.03 & 0.23 \\ \hline
+	10 & 0.602998 & 0.1206 & 35.7 & 5.22 & 6.03 & 0.23 \\ \hline \hline
+
+	Workload: & \multicolumn{6}{c |}{CPU intensive} \\ \hline
+	& & & \multicolumn{2}{c |}{turnaround time} & \multicolumn{2}{c |}{waiting time} \\
+	Time slice & {CPU util.} & {throughput} & {$\overline{x}$} & {$\sigma$} & {$\overline{x}$} & {$\sigma$} \\ \hline
+
+	0.1 & 0.332779 & 0.008319 & 597.96 & 3.1 & 513.69 & 0.17 \\ \hline
+	0.5 & 0.713776 & 0.017844 & 276.32 & 3.3 & 224.13 & 0.21 \\ \hline
+	1 & 0.832639 & 0.020816 & 236.98 & 2.23 & 188.79 & 0.26 \\ \hline
+	5 & 0.960615 & 0.024015 & 194.58 & 9.64 & 149.59 & 1.64 \\ \hline
+	10 & 0.980392 & 0.024510 & 183.5 & 14.42 & 138.93 & 2.57 \\ \hline \hline
+
+	Workload: & \multicolumn{6}{c |}{Mixed load} \\ \hline
+	& & & \multicolumn{2}{c |}{turnaround time} & \multicolumn{2}{c |}{waiting time} \\
+	Time slice & {CPU util.} & {throughput} & {$\overline{x}$} & {$\sigma$} & {$\overline{x}$} & {$\sigma$} \\ \hline
+
+	0.1 & 0.326909 & 0.016345 & 300.80 & 2.81 & 243.46 & 0.31 \\ \hline
+	0.5 & 0.674860 & 0.033743 & 140.65 & 3.82 & 99.32 & 0.27 \\ \hline
+	1 & 0.789166 & 0.039458 & 122.21 & 2.23 & 82.87 & 0.45 \\ \hline
+	5 & 0.886527 & 0.044326 & 101.21 & 6.38 & 63.55 & 0.82 \\ \hline
+	10 & 0.886527 & 0.044326 & 101.21 & 6.38 & 63.55 & 0.82 \\ \hline
+	
+\end{tabular}
+\caption{T3 tables, with context switch time}
+\end{table}

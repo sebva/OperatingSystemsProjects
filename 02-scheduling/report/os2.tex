@@ -1,0 +1,108 @@
+\documentclass[11pt,a4paper]{scrartcl}
+\usepackage[utf8]{inputenc}
+\usepackage[british]{babel}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage[headsepline]{scrlayer-scrpage}
+\usepackage{minted}
+\usepackage{tabu}
+%\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{setspace}
+\usepackage{graphicx}
+\usepackage{pgfplots}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{titling}
+%\usepackage[backend=biber,sorting=none]{biblatex}
+\usepackage{csquotes}
+%\usepackage{pdfpages}
+%\usepackage{epstopdf}
+\usepackage{graphicx}
+\usepackage{subfig}
+\usepackage{siunitx}
+
+%\usepackage{enumitem}
+
+\pgfplotsset{width=12cm,height=6cm,compat=1.11}
+
+% Constants
+\def\mytitle{Operating Systems - Practical \#{}2}
+\def\myauthor{Sébastien Vaucher}
+
+\pagestyle{scrheadings}
+\posttitle{\end{center}\begin{center}\LARGE Process Scheduling\end{center}}
+
+\author{\myauthor}
+\title{\huge \textbf{\mytitle}}
+
+\ihead{\mytitle}
+\ohead{\myauthor}
+
+\sisetup{round-mode=places}
+
+\begin{document}
+
+\maketitle
+
+\section*{Introduction}
+
+This report is the result of the second practical project of the course Operating Systems taught at the University of Neuchâtel. The goal is to compare the performances of various process scheduling algorithms in certain conditions. To obtain data relative to the algorithms, we will use a process scheduling simulator developed at the University of Texas at San Antonio.
+
+\section*{T1 - Individual Workload}
+
+In this first task, we simulate a certain type of workload and compare 4 algorithms for each task.
+
+For the interactive workload, we can see from the table below that the choice of scheduler has only little effect. This is because the tasks are short and well spaced out. The SJFA algorithm is better in this case as it provides better throughput, turnaround time and waiting time. However, the improvement is not significant.
+
+The CPU intensive workload simulates tasks similar to scientific computations. What we want is maximal CPU utilization and minimal turnaround time. We can see that Round Robin is worse for this usage compared to the other algorithms. Round Robin uses preemption, which is not needed in this case, as it would only improve the waiting time. All three other algorithms perform in exactly the same manner, which shows that they order the tasks similarly.
+
+In the mixed load scenario, there is no clear winner between the algorithms. SJFA offers the best CPU utilization and throughput. SJF is better in terms of turnaround and waiting times. The standard deviation of the turnaround time is quite high, because a process executing only long bursts may get delayed until all processes executing shorter bursts finish their executions. Processes executing short bursts finish earlier. This is confirmed by the Gantt chart, in which we can see that processes 1 and 3 finish at 50 while the other processes finish at 100.
+
+\begin{figure}
+\includegraphics[width=\textwidth]{mixedload.png}
+\caption{Gantt chart of mixed workload with SJF algorithm}
+\end{figure}
+
+\input{t1_tables.tex}
+
+\section*{T2 - Mixing Workloads}
+
+For the second task, we will combine processes doing interactive work with processes executing CPU intensive work. This is a scenario that is likely to happen on a desktop computer. The goal is to finish the CPU intensive tasks fast while giving priority to the interactive processes to keep the user interface responsive.
+
+FCFS is clearly not adapted for this scenario. Problems start when a long task arrives slightly before a shortest one. The short task will have to wait for the longest task to finish before being allocated to the processor. It can get even worse if multiple long tasks are already waiting when a short task arrives.
+
+SJF performs quite well in our simulation. Due to its priority model, short bursts never wait too long and execute in one block. In a real case, however, tasks that are CPU intensive might get starved.
+
+SJFA is worse because the estimation of the length of bursts is imperfect. It might think that a burst is short, but is in reality long. The same problems that we have with FCFS will then appear.
+
+Round Robin gets good statistics. The fact that it is preemptive allows interleaving of short and long bursts. Turnaround and waiting times are on par with SJF, but with higher standard deviation. Its main advantage is the lack of starvation.
+
+\input{t2_tables.tex}
+
+\section*{T3 - Varying the Round Robin Time Slice}
+
+The goal of the third task is to observe the influence of the time slice parameter of the Round Robin scheduling algorithm. First we will ignore the context-switch time, and then we will redo the experiment taking it into account. The time slice defines how long a process can occupy the CPU before being preempted. A short time slice provides a fair share of CPU time to each process, at the expense of more context switches. This will have a bigger influence in the second variant of the experiment.
+
+When we do not take context switches time into account, we can see that the time slice has minor influence towards the execution statistics. In the interactive workload, the tasks are short. Setting the time slice too low make short bursts appear longer than they really are. This introduces unnecessary waiting times, which gives poor results. Apart from the extreme $0.1$ value, all other values produce exactly the same result.
+
+In a CPU intensive environment, Round Robin has the ability to max out the CPU utilization. The best times are obtained with higher time slices. Too high time slices are not good in terms of turnaround time, but decrease the time spent waiting.
+
+Mixed load scenario is where Round Robin is a sensible choice. Bursts of different lengths are interleaved which permits good turnaround times. The best time slice in this case is $>5$ if we want to optimize execution times, but a small time slice provides better CPU utilization and throughput. The length of bursts in this scenario is between $1$ and $5$. We can see on the table that a good compromise utilization/time lies with a time slice in the order or the bursts length.
+
+When context switch time is taken into account, smaller time slice values cause more preemption, leading to a decrease in efficiency. In our case, the highest value consistently produces the best statistics. For recall, the higher the time slice, the more we tend to FCFS. The advantage of Round Robin is to prevent a very long process to monopolise the CPU. The time slice has to be longer than the majority of bursts, but still permit small burst to execute without waiting too much.
+
+\input{t3_tables.tex}
+
+\section*{T4 - High Load Performance}
+
+The last task which we will investigate is high load performance. A large number of processes executing different workloads will compete. The order of arrival of the processes is important. In our case, processes executing smaller bursts arrive early. This means that SJF will be quite good.
+
+What we observe is that the CPU utilization and throughput are the same for all algorithms. What changes is the turnaround and waiting times. SJF and SJFA make long bursts wait a long time which can be deducted from the fact that the standard deviation is really high. In this sense, Round Robin is more fair towards all types of processes. FCFS performance is abysmal, because he might make a very small bursts wait a very long time.
+
+In the end, we can conclude that Round Robin provides a good compromise, preventing small bursts from waiting too long, and enabling long bursts to execute, even when a lot of smaller bursts are present.
+
+\input{t4_tables.tex}
+
+\end{document}

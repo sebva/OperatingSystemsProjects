@@ -1,0 +1,6 @@
+name t4
+comment High-load performance
+run high_load algorithm FCFS key "FCFS"
+run high_load algorithm RR 1 key "RR_1"
+run high_load algorithm SJF key "SJF"
+run high_load algorithm SJFA 0.5 key "SJFA_0.5"
