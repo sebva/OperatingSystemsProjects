@@ -48,9 +48,10 @@ public class Driver {
 	public static MMU_Interface getMemory() {
 		switch (memoryType) {
 		case MEMORY_MMU:
-			return new students_partOne.MMU();
+			return new vaucher_part1.MMU();
 		case MEMORY_VM:
-			return new students_partTwo.MMU();
+            throw new RuntimeException("Part 2 not yet implemented");
+			//return new students_partTwo.MMU();
 		default:
 			return null;
 		}
