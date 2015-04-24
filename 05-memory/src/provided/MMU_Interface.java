@@ -24,7 +24,7 @@ public interface MMU_Interface {
 	 * 
 	 * This call is only used for the first part of the practical, without demand paging.
 	 * 
-	 * @param processId The identifier of the new process
+	 * @param processIdentifier The identifier of the new process
 	 * @param memorySize The size of the valid memory for this process
 	 */
 	public void reserveMemory (int processIdentifier, int memorySize);
