@@ -1,5 +1,8 @@
 package ch.unine.os.as4;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * User of the bike rental system
  *
@@ -17,14 +20,23 @@ public class User extends Thread {
     private int tripsRemaining;
 
     /**
-     * Create a new user in the system
+     * List of trips made by the user
+     */
+    private final List<Journey> journeys;
+
+    /**
+     * Create a new user of the system
      * @param city The City object
-     * @param userId A unique user ID, used only for logging
+     * @param userId A unique user ID
      */
     public User(City city, int userId) {
         this.city = city;
         this.userId = userId;
+
+        // Generate random number of trips to make
         this.tripsRemaining = RandomUtils.randomRange(NB_TRIPS_MIN, NB_TRIPS_MAX);
+
+        this.journeys = new ArrayList<Journey>(tripsRemaining);
     }
 
     @Override
@@ -42,16 +54,32 @@ public class User extends Thread {
                 arrivalStand = city.getRandomArrivalStand();
             } while (startStand == arrivalStand); // Try again if both stands are the same
 
-            startStand.rentBike();
+            Bike bike = startStand.rentBike();
 
             try {
                 Thread.sleep(TRIP_DURATION_PER_STAND * city.distanceBetween(startStand, arrivalStand));
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            arrivalStand.returnBike();
 
-            System.out.println("User " + userId + " has started at " + startStand.getStandId() + " and arrived at " + arrivalStand.getStandId());
+            arrivalStand.returnBike(bike);
+            journeys.add(new Journey(startStand.getStandId(), arrivalStand.getStandId()));
         }
+    }
+
+    /**
+     * Get the unique ID associated to this user
+     * @return A unique ID
+     */
+    public int getUserId() {
+        return userId;
+    }
+
+    /**
+     * Get the list of trips made by the user
+     * @return The list of trips
+     */
+    public List<Journey> getJourneys() {
+        return journeys;
     }
 }

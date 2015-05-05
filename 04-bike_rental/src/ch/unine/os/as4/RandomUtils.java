@@ -16,7 +16,7 @@ public class RandomUtils {
     }
 
     /**
-     * Return a random number that is min >= number >= max.
+     * Return a random number that is min &gt;= number &gt;= max.
      * @param min Lower bound (inclusive)
      * @param max Upper bound (inclusive)
      * @return A random integer

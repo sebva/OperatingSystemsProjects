@@ -1,5 +1,7 @@
 package ch.unine.os.as4;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,11 +17,14 @@ public class City {
     private static final int[] startStands = {0, 0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 4, 4, 5};
     private static final int[] arrivalStands = {0, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5, 5};
 
-    private List<User> users;
-    private List<BikeStand> stands;
-    private BalancingTruck truck;
+    private final List<User> users;
+    private final List<BikeStand> stands;
+    private final BalancingTruck truck;
+    private final List<Bike> bikes;
+
     /**
-     * Flag that tells the truck when to stop running
+     * Flag that tells the truck when to stop running. Volatile to ensure that the other thread sees concurrent
+     * modifications.
      */
     private volatile boolean running;
 
@@ -29,39 +34,50 @@ public class City {
      * @param nbStands Number of available bike stands
      */
     public City(int nbUsers, int nbStands) {
+        System.out.println(String.format("%d users, %d stands, %d bikes/stand", nbUsers, nbStands,
+                                                                                BikeStand.STAND_IDEAL_CAPACITY));
+
         // Assert that the probability lists are correct for the input
         if (startStands[startStands.length - 1] != nbStands - 1 ||
                 arrivalStands[arrivalStands.length - 1] != nbStands - 1) {
             throw new RuntimeException("Invalid probability list for the given number of stands");
         }
 
+        // Create objects of the system
         users = new ArrayList<User>(nbUsers);
         stands = new ArrayList<BikeStand>(nbStands);
-
+        bikes = new ArrayList<Bike>(BikeStand.STAND_IDEAL_CAPACITY * nbStands);
         for (int i = 0; i < nbUsers; i++) {
             users.add(new User(this, i));
         }
         for (int i = 0; i < nbStands; i++) {
-            stands.add(new BikeStand(i));
+            stands.add(new BikeStand(this, i));
         }
-
         truck = new BalancingTruck(this);
     }
 
+    /**
+     * Is there at least 1 user that is using the system. Used to stop the balancing truck thread.
+     * @return True if the system is still running
+     */
     public boolean isRunning() {
         return running;
     }
 
     /**
-     * Run the simulation, results are printed to stdout
+     * Run the simulation, Results are printed to stdout.
      */
     public void runSimulation() {
+        long startTime = System.nanoTime();
+
         running = true;
         truck.start();
 
         for (User user : users) {
             user.start();
         }
+        System.out.println("Simulation started");
+
         for (User user : users) {
             try {
                 user.join();
@@ -69,14 +85,47 @@ public class City {
                 e.printStackTrace();
             }
         }
+        // Stop the truck thread
         running = false;
-        truck.interrupt();
+        truck.interrupt(); // Force exit of a wait() call
+
+        long elapsed = System.nanoTime() - startTime;
+
+        System.out.println("End of simulation\n");
+
+        // Print trips of bikes, users and truck
+        for (Bike bike : bikes) {
+            System.out.println(String.format("Bike %d trips {", bike.getBikeId()));
+            for (Journey journey : bike.getJourneys()) {
+                System.out.println(String.format("\t%d --> %d", journey.startStandId, journey.endStandId));
+            }
+            System.out.println("}");
+        }
+        for (User user : users) {
+            System.out.println(String.format("User %d trips {", user.getUserId()));
+            for (Journey journey : user.getJourneys()) {
+                System.out.println(String.format("\t%d --> %d", journey.startStandId, journey.endStandId));
+            }
+            System.out.println("}");
+        }
+        int standId = 0;
+        int inTruck = 0;
+        System.out.println("Truck refills {");
+        NumberFormat refillFormat = new DecimalFormat("+#;-#");
+        for (int refill : truck.getRefillHistory()) {
+            inTruck -= refill;
+            System.out.println(String.format("\tStand %d: %s bike(s); %d bike(s) in truck", standId, refillFormat.format(refill), inTruck));
+            standId = (standId + 1) % stands.size();
+        }
+        System.out.println("}");
 
         // Print final state
+        System.out.println("\nFinal state {");
         for (BikeStand stand : stands) {
-            System.out.println(stand);
+            System.out.println(String.format("\tStand %d: %d bike(s)", stand.getStandId(), stand.getBikeCount()));
         }
-        System.out.println(truck);
+        System.out.println(String.format("\tTruck:   %d bike(s)\n}", truck.getBikeCount()));
+        System.out.println(String.format("Time elapsed in simulation: %.2f ms", elapsed / 1000000.));
     }
 
     /**
@@ -147,7 +196,16 @@ public class City {
             counterClockwiseCount++;
         }
 
+        // Return shortest distance
         return Integer.min(clockwiseCount, counterClockwiseCount);
+    }
+
+    /**
+     * Register a reference to a Bike object on its creation
+     * @param bike The Bike to keep the reference to
+     */
+    public void registerBike(Bike bike) {
+        bikes.add(bike);
     }
 
     /**
@@ -155,7 +213,7 @@ public class City {
      * @param args Ignored
      */
     public static void main(String[] args) {
-        City city = new City(100, 6); // Has to be nbStands = 6 for the probability lists
+        City city = new City(200, 6); // Has to be nbStands = 6 for the probability lists
         city.runSimulation();
     }
 }
