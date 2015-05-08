@@ -17,11 +17,11 @@ public class MMU implements MMU_Interface {
     /**
      * The Page Table Base Register (PTBR) for each process
      */
-    private Map<Integer, Integer> pageTableBase;
+    private final Map<Integer, Integer> pageTableBase;
     /**
      * Similar register to obtain the Page Table Queue lists
      */
-    private Map<Integer, Integer> pageListBase;
+    //private Map<Integer, Integer> pageListBase;
     /**
      * Register for storing the next free frame
      */
@@ -34,14 +34,14 @@ public class MMU implements MMU_Interface {
 
     private int firstFreeEntryInPageListArea;
 
-    private TLB_interface myTLB = null; //First Part
-    private PagerInterface myPager = null; //Second Part
+    private final TLB_interface myTLB; //First Part
+    private final PagerInterface myPager = null; //Second Part
 
     // CONSTRUCTOR
     public MMU() {
         //TODO: complete me
         pageTableBase = new HashMap<Integer, Integer>();
-        pageListBase = new HashMap<Integer, Integer>();
+        //pageListBase = new HashMap<Integer, Integer>();
 
         // Considerations
         // Calculate the memory size in frames
@@ -56,6 +56,7 @@ public class MMU implements MMU_Interface {
         //Calculate where in memory the first page list goes  (set firstFreeEntryInPageListArea)
 
         // create the TLB and Pager
+        myTLB = new TLB();
     }
 
     /*
@@ -218,14 +219,20 @@ public class MMU implements MMU_Interface {
         // Calculate the page number and offset from the virtualAddress
         int pageNumber = virtualAddress / PAGE_SIZE;
         // If the frame-page association is not in the TLB, you must retrieve it from the page table
-        int pageTable = pageTableBase.get(processIdentifier) + pageNumber * 2;
-        int flag = PhysicalMemory.readByte(pageTable);
-        // If the page table's entry is marked as invalid, throw an exception (invalid memory accessed)
-        if(isFlagSet(flag, FLAG_INVALID)) {
-            throw new RuntimeException("Trying to access an invalid frame");
+        int frame;
+        frame = myTLB.getAssociation(processIdentifier, virtualAddress);
+        if(frame == -1) {
+            int pageTable = pageTableBase.get(processIdentifier) + pageNumber * 2;
+            int flag = PhysicalMemory.readByte(pageTable);
+            // If the page table's entry is marked as invalid, throw an exception (invalid memory accessed)
+            if (isFlagSet(flag, FLAG_INVALID)) {
+                throw new RuntimeException("Trying to access an invalid frame");
+            }
+            frame = PhysicalMemory.readByte(pageTable + 1);
+
+            // Update the TLB association
+            myTLB.setAssociation(processIdentifier, virtualAddress, frame);
         }
-        int frame = PhysicalMemory.readByte(pageTable + 1);
-        // Update the TLB association
 
         // Considerations (part two)
         // If the page table's entry is marked as invalid AND used, the page is valid but not in memory: must page-in
