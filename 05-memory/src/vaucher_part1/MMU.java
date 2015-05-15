@@ -19,10 +19,6 @@ public class MMU implements MMU_Interface {
      */
     private final Map<Integer, Integer> pageTableBase;
     /**
-     * Similar register to obtain the Page Table Queue lists
-     */
-    //private Map<Integer, Integer> pageListBase;
-    /**
      * Register for storing the next free frame
      */
     private int nextPhysicalFrame;
@@ -32,14 +28,11 @@ public class MMU implements MMU_Interface {
      */
     private int firstFreeEntryInPageTableArea;
 
-    private int firstFreeEntryInPageListArea;
-
     private final TLB_interface myTLB; //First Part
     private final PagerInterface myPager = null; //Second Part
 
     // CONSTRUCTOR
     public MMU() {
-        //TODO: complete me
         pageTableBase = new HashMap<Integer, Integer>();
         //pageListBase = new HashMap<Integer, Integer>();
 
@@ -58,10 +51,6 @@ public class MMU implements MMU_Interface {
         // create the TLB and Pager
         myTLB = new TLB();
     }
-
-    /*
-     * Helping methods
-     */
 
     // UNIT TEST
     public static void main(String[] args) {
@@ -125,12 +114,7 @@ public class MMU implements MMU_Interface {
         return value & 0xff;
     }
 
-    /*
-     * Methods from the MMU_Interface
-     */
     private int findAndTakeFreeFrame(int processIdentifier) {
-        //TODO: implement this method
-
         // Considerations (part 1)
         // Locate the next free frame and return it
         // When there are no more physical frames available, throw an exception
@@ -154,8 +138,6 @@ public class MMU implements MMU_Interface {
 
     @Override
     public void reserveMemory(int processIdentifier, int memorySize) {
-        //TODO: implement this method
-
         // Prerequisites
         // processIdentifier does not already exists
         if(pageTableBase.containsKey(processIdentifier)) {
@@ -202,9 +184,6 @@ public class MMU implements MMU_Interface {
 
     private int getPhysicalAdress(int processIdentifier, int virtualAddress,
             boolean forWriting) {
-
-        //TODO: implement this method
-
         // Prerequisites
         // Check that processIdentifier is registered in our pageTableBase
         if(!pageTableBase.containsKey(processIdentifier)) {

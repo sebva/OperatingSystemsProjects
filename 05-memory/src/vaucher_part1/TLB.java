@@ -10,6 +10,9 @@ public class TLB implements TLB_interface {
 
     private int nbRequests = 0;
     private int nbSuccess = 0;
+    /**
+     * Map a process ID and a page number with the physical address
+     */
     private final Map<TLBEntryIdentifier, Integer> tlbMap;
     private final Random random;
     private static final int TLB_SIZE = 16;
@@ -46,7 +49,7 @@ public class TLB implements TLB_interface {
 
     @Override
     public float getHitRate() {
-        return nbRequests == 0 ? 0 : nbSuccess / (float) nbRequests;
+        return nbRequests == 0 ? 0 : nbSuccess / (float) nbRequests; // Prevent div. 0
     }
 
     private void removeRandomAssociation() {
