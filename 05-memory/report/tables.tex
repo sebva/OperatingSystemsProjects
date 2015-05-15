@@ -1,0 +1,34 @@
+\afterpage{%
+    \clearpage% Flush earlier floats (otherwise order might not be correct)
+%    \thispagestyle{empty}% empty page style (?)
+    \begin{landscape}% Landscape page
+        \centering % Center table
+        
+                
+\begin{tabular}{lrrrrrrrr}
+\toprule
+	& \multicolumn{2}{c}{Without TLB} & \multicolumn{3}{c}{TLB (size 4)} & \multicolumn{3}{c}{TLB (size 16)} \\
+	\cmidrule(r){2-3} \cmidrule(r){4-6} \cmidrule(r){7-9}
+	Workload & {Reads} & {Writes} & {Reads} & {Writes} & {Hit Rate} & {Reads} & {Writes} & Hit Rate \\
+	
+	\midrule
+	 
+	\texttt{ls} & 1639244 & 312504 & 1557096 & 312504 & 0.063 & 1400810 & 312504 & 0.183 \\
+	\texttt{echo} & 1127276 & 222768 & 1065568 & 222768 & 0.069 & 960590 & 222768 & 0.185 	\\
+	\texttt{touch} & 1469536 & 286012 & 1393180 & 286012 & 0.065 & 1254940 & 286012 & 0.183 \\
+	\texttt{bc} & 2881384 & 546292 & 2723902 & 546292 & 0.069 & 2496668 & 546292 & 0.168 \\
+	\texttt{ls}+\texttt{touch} & 3108780 & 598516 & 2953242 & 598516 & 0.063 & 2666342 & 598516 & 0.179 \\
+	\texttt{ls}+\texttt{echo}+\texttt{touch} & 4236056 & 821284 & 4018566 & 821284 & 0.065 & 3632924 & 821284 & 0.179 \\
+	\texttt{ls}+\texttt{echo}+\texttt{touch}+\texttt{bc} & 7117440 & 1367576 & 6745094 & 1367576 & 0.066 & 6136038 & 1367576 & 0.174 \\
+
+	
+	\bottomrule
+	
+\end{tabular}
+       
+       
+        \captionof{table}{Results with and without a TLB}\label{tab:1}% Add 'table' caption
+    \end{landscape}
+    \clearpage% Flush page
+}
+

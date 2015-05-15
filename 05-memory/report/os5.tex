@@ -1,0 +1,85 @@
+\documentclass[11pt,a4paper]{scrartcl}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[australian,american]{babel}
+%\usepackage{amsmath}
+%\usepackage{amsfonts}
+%\usepackage{amssymb}
+\usepackage[headsepline]{scrlayer-scrpage}
+%\usepackage{minted}
+%\usepackage{tabu}
+%\usepackage{longtable}
+\usepackage{booktabs}
+%\usepackage{multirow}
+%\usepackage{setspace}
+%\usepackage{graphicx}
+%\usepackage{pgfplots}
+%\usepackage{url}
+\usepackage{titling}
+%\usepackage[backend=biber,sorting=none]{biblatex}
+\usepackage{csquotes}
+%\usepackage{pdfpages}
+%\usepackage{epstopdf}
+%\usepackage{graphicx}
+%\usepackage{subfig}
+%\usepackage{siunitx}
+\usepackage{pdflscape}
+\usepackage{afterpage}
+\usepackage{hyperref}
+
+%\usepackage{enumitem}
+
+%\pgfplotsset{width=12cm,height=6cm,compat=1.11}
+
+% Constants
+\def\mytitle{Operating Systems - Practical \#{}5}
+\def\myauthor{Sébastien Vaucher}
+
+\pagestyle{scrheadings}
+\posttitle{\end{center}\begin{center}\LARGE Memory Management -- part 1\end{center}}
+
+\author{\myauthor}
+\title{\huge \textbf{\mytitle}}
+
+\ihead{\mytitle}
+\ohead{\myauthor}
+
+%\sisetup{round-mode=places}
+
+\hypersetup{
+	pdftitle=\mytitle,
+	pdfauthor=\myauthor
+}
+
+\begin{document}
+
+\begin{otherlanguage}{australian}
+\maketitle
+\end{otherlanguage}
+
+\section*{Introduction}
+
+This report is the result of the fifth practical project of the course Operating Systems taught at the University of Neuchâtel. The goal is to implement a simulator of a \textit{Memory Management Unit} (MMU) combined with a \textit{Translation Look-aside Buffer} (TLB). They will be tested against memory traces of real programs, and the number of reads and writes to the physical memory will be monitored.
+
+This homework is the first part of the practical exercise on memory management.
+
+\section*{Analysis of results}
+
+\input{tables.tex}
+
+In this section, we analyze the results presented in \autoref{tab:1}.
+
+Using a TLB only improves the number of memory reads. The page table still needs to be written to the physical memory. Also, the MMU does not deal with memory accesses that are done by the user application.
+
+We can observe that even a very small TLB (4 entries) already provides a substantial performance gain of $\sim 6.5 \%$ on the number of read accesses. With a TLB 4 times this size, we get a reduction of $\sim 17.9 \%$ on the number of read accesses. With a TLB of size 16 versus a TLB of size 4, the reduction in terms of number of read accesses is $2.8 \times$.
+
+Without a TLB, the number of memory accesses when combining multiple tasks is simply the sum of the number of memory accesses of the individual tasks. With a TLB, this is no longer the case for the number of read accesses. This is because the individual executions do not share access to the TLB, while with combinations of different programs, the TLB is shared.
+
+The difference of efficiency between different programs is subtle. It depends on how often the program asks for the same page. The deletion policy of the TLB can help improve the efficiency by removing entries that are less likely to be accessed in the near future.
+
+\section*{Conclusion}
+
+Associating a TLB to an MMU greatly improves the performance of memory reads. The bigger the TLB the better. The performance also depends on the nature of the processes that are executed on the system.
+
+\end{document}
