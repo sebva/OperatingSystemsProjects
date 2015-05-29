@@ -1,15 +1,14 @@
 package driver;
 
-import java.io.IOException;
-import java.util.Iterator;
-import java.util.Vector;
-
-import javax.swing.SwingUtilities;
-
 import provided.Disk;
 import provided.MMU_Interface;
 import provided.PhysicalMemory;
 import provided.TLB_interface;
+
+import javax.swing.*;
+import java.io.IOException;
+import java.util.Iterator;
+import java.util.Vector;
 
 /**
  * This class is the driver for the evaluation of your mechanisms.
@@ -48,10 +47,9 @@ public class Driver {
 	public static MMU_Interface getMemory() {
 		switch (memoryType) {
 		case MEMORY_MMU:
-			return new vaucher_part2.MMU();
+			//return new vaucher_part1.MMU();
 		case MEMORY_VM:
-            throw new RuntimeException("Part 2 not yet implemented");
-			//return new students_partTwo.MMU();
+			return new vaucher_part2.MMU();
 		default:
 			return null;
 		}
@@ -139,6 +137,6 @@ public class Driver {
 	}
 
 	public static void main(String[] args) {
-		generateMMUtest();
+		generateVMtest();
 	}
 }

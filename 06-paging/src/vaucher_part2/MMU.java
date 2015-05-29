@@ -1,9 +1,6 @@
 package vaucher_part2;
 
-import provided.MMU_Interface;
-import provided.PagerInterface;
-import provided.PhysicalMemory;
-import provided.TLB_interface;
+import provided.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,6 +16,10 @@ public class MMU implements MMU_Interface {
      */
     private final Map<Integer, Integer> pageTableBase;
     /**
+     * Similar register to obtain the Page Table Queue lists
+     */
+    private final Map<Integer, Integer> pageListBase;
+    /**
      * Register for storing the next free frame
      */
     private int nextPhysicalFrame;
@@ -27,29 +28,34 @@ public class MMU implements MMU_Interface {
      * or Page Queue List)
      */
     private int firstFreeEntryInPageTableArea;
+    private int firstFreeEntryInPageListArea;
 
     private final TLB_interface myTLB; //First Part
-    private final PagerInterface myPager = null; //Second Part
+    private final PagerInterface myPager; //Second Part
 
     // CONSTRUCTOR
     public MMU() {
         pageTableBase = new HashMap<Integer, Integer>();
-        //pageListBase = new HashMap<Integer, Integer>();
+        pageListBase = new HashMap<Integer, Integer>();
 
         // Considerations
         // Calculate the memory size in frames
         numberOfPhysicalFrames = PhysicalMemory.MEMORY_SIZE / PAGE_SIZE;
 
         // Calculate the memory required for the OS (in frames)
+        int pageTablesSpace = NB_PAGES_IN_PROCESS_ADDRESS_SPACE * 4 * MAX_NUMBER_PROCESSES;
+        int queuesSpace = (NB_PAGES_IN_PROCESS_ADDRESS_SPACE + 2) * MAX_NUMBER_PROCESSES;
         // Reserve the OS space (set nextPhysicalFrame)
-        nextPhysicalFrame = (int) (Math.ceil(NB_PAGES_IN_PROCESS_ADDRESS_SPACE * 2 * MAX_NUMBER_PROCESSES) / (double)PAGE_SIZE);
+        nextPhysicalFrame = (int) (Math.ceil((pageTablesSpace + queuesSpace) / (double)PAGE_SIZE));
 
         //Calculate where in memory the first page table goes (set firstFreeEntryInPageTableArea)
         firstFreeEntryInPageTableArea = 0;
         //Calculate where in memory the first page list goes  (set firstFreeEntryInPageListArea)
+        firstFreeEntryInPageListArea = pageTablesSpace + 1;
 
         // create the TLB and Pager
         myTLB = new TLB();
+        myPager = new Pager(new Disk(Disk.DISK_SIZE));
     }
 
     // UNIT TEST
@@ -147,43 +153,43 @@ public class MMU implements MMU_Interface {
         if(pageTableBase.size() >= MAX_NUMBER_PROCESSES) {
             throw new RuntimeException("Max number of processes already reached");
         }
+        if(memorySize > PhysicalMemory.MEMORY_SIZE) {
+            throw new RuntimeException("Trying to reserve too much memory");
+        }
 
-        // Considerations (part 1)
         // Locate where in memory the page table must go
         int pageTableLocation = firstFreeEntryInPageTableArea;
         // Record this location in the pageTableBase register
         pageTableBase.put(processIdentifier, pageTableLocation);
+        firstFreeEntryInPageTableArea += numberOfPhysicalFrames * 4;
 
-        int nbUsedPages = (int) Math.ceil(memorySize / (double) PAGE_SIZE);
+        // Locate where in memory the page list must go
+        int pageListLocation = firstFreeEntryInPageListArea;
+        pageListBase.put(processIdentifier, pageListLocation);
+        firstFreeEntryInPageListArea += (int) Math.ceil(memorySize / (double) PAGE_SIZE) + 2;
 
-        // Initialize the page table entries with either "used" for pages required, or "invalid" for the others
+        // On-demand paging means that memory should not be reserved in this method
+        // But all required entries are both "used" and "invalid" since they are not in memory
         for (int i = 0; i < NB_PAGES_IN_PROCESS_ADDRESS_SPACE; i++) {
-            int frame = 0, flags;
-            if(i < nbUsedPages) {
-                frame = findAndTakeFreeFrame(processIdentifier);
-                flags = FLAG_USED;
-            }
-            else {
-                flags = FLAG_INVALID;
-            }
+            int flags = FLAG_USED | FLAG_INVALID;
 
-            int pageAddress = firstFreeEntryInPageTableArea + i * 2;
+            int pageAddress = pageTableLocation + i * 4;
             PhysicalMemory.writeByte(pageAddress, flags);
-            PhysicalMemory.writeByte(pageAddress + 1, frame);
+            PhysicalMemory.writeByte(pageAddress + 1, 0);
+            PhysicalMemory.writeByte(pageAddress + 2, 0);
+            PhysicalMemory.writeByte(pageAddress + 3, 0);
         }
         // Used pages also need to reserve a physical memory frame
 
         // Considerations (part 2)
-        // On-demand paging means that memory should not be reserved in this method
-        // But all required entries are both "used" and "invalid" since they are not in memory
-        // Locate where in memory the page list must go
-        // Initialize the list's head/tail to zero
 
-        firstFreeEntryInPageTableArea += numberOfPhysicalFrames * 2;
+
+        // Initialize the list's head/tail to zero
+        PhysicalMemory.writeByte(pageListLocation, 0);
+        PhysicalMemory.writeByte(pageListLocation + 1, 0);
     }
 
-    private int getPhysicalAdress(int processIdentifier, int virtualAddress,
-            boolean forWriting) {
+    private int getPhysicalAddress(int processIdentifier, int virtualAddress, boolean forWriting) {
         // Prerequisites
         // Check that processIdentifier is registered in our pageTableBase
         if(!pageTableBase.containsKey(processIdentifier)) {
@@ -197,8 +203,33 @@ public class MMU implements MMU_Interface {
         // Considerations (part one)
         // Calculate the page number and offset from the virtualAddress
         int pageNumber = virtualAddress / PAGE_SIZE;
-        // If the frame-page association is not in the TLB, you must retrieve it from the page table
         int frame;
+
+        // Considerations (part two)
+        // If the page table's entry is marked as invalid AND used, the page is valid but not in memory: must page-in
+        int pageTable = pageTableBase.get(processIdentifier) + pageNumber * 4;
+        int flag = PhysicalMemory.readByte(pageTable);
+        if (isFlagSet(flag, FLAG_INVALID)) {
+            if (isFlagSet(flag, FLAG_USED)) {
+                frame = findAndTakeFreeFrame(processIdentifier);
+                flag = removeFlag(flag, FLAG_INVALID);
+                PhysicalMemory.writeByte(pageTable, flag);
+                PhysicalMemory.writeByte(pageTable + 1, frame);
+            } else {
+                throw new RuntimeException("Invalid page");
+            }
+        }
+        else {
+            frame = PhysicalMemory.readByte(pageTable + 1);
+        }
+
+        // Obtain a free Frame for this page
+        // Add the page to the page list's head
+        // If the page is marked as on disk, load it from disk and into memory
+        // Update the page's mode (no longer invalid, also mark as dirty if used for a write)
+
+        // If the frame-page association is not in the TLB, you must retrieve it from the page table
+        /* Part 1 TLB Stuff
         frame = myTLB.getAssociation(processIdentifier, virtualAddress);
         if(frame == -1) {
             int pageTable = pageTableBase.get(processIdentifier) + pageNumber * 2;
@@ -212,13 +243,8 @@ public class MMU implements MMU_Interface {
             // Update the TLB association
             myTLB.setAssociation(processIdentifier, virtualAddress, frame);
         }
+        //*/
 
-        // Considerations (part two)
-        // If the page table's entry is marked as invalid AND used, the page is valid but not in memory: must page-in
-        // Obtain a free Frame for this page
-        // Add the page to the page list's head
-        // If the page is marked as on disk, load it from disk and into memory
-        // Update the page's mode (no longer invalid, also mark as dirty if used for a write)
 
         //Return the physical address for this virtual address
         int offset = virtualAddress % PAGE_SIZE;
@@ -228,7 +254,7 @@ public class MMU implements MMU_Interface {
     @Override
     public int read(int processIdentifier, int virtualAddress) {
         // get the physical address for this process and virtual address
-        int physicalAddress = getPhysicalAdress(processIdentifier,
+        int physicalAddress = getPhysicalAddress(processIdentifier,
                 virtualAddress, false);
         // access physical memory
         return PhysicalMemory.readByte(physicalAddress);
@@ -237,7 +263,7 @@ public class MMU implements MMU_Interface {
     @Override
     public void write(int processIdentifier, int virtualAddress, int data) {
         // get the physical address for this process and virtual address
-        int physicalAddress = getPhysicalAdress(processIdentifier,
+        int physicalAddress = getPhysicalAddress(processIdentifier,
                 virtualAddress, true);
         // access physical memory
         PhysicalMemory.writeByte(physicalAddress, data);
