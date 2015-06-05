@@ -18,7 +18,7 @@ public class TLB implements TLB_interface {
     private static final int TLB_SIZE = 16;
 
     public TLB() {
-        tlbMap = new HashMap<TLBEntryIdentifier, Integer>(MMU.TLB_SIZE);
+        tlbMap = new HashMap<>(MMU.TLB_SIZE);
         random = new Random(97878967189L); // Predictable results
     }
 

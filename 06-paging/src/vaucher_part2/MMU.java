@@ -35,8 +35,8 @@ public class MMU implements MMU_Interface {
 
     // CONSTRUCTOR
     public MMU() {
-        pageTableBase = new HashMap<Integer, Integer>();
-        pageListBase = new HashMap<Integer, Integer>();
+        pageTableBase = new HashMap<>();
+        pageListBase = new HashMap<>();
 
         // Considerations
         // Calculate the memory size in frames
@@ -63,20 +63,18 @@ public class MMU implements MMU_Interface {
 
         MMU m = new MMU();
 
-        m.reserveMemory(2, 12800);
+        m.reserveMemory(1, 65536);
+        m.reserveMemory(2, 65536);
+        for (int i = 0; i < 65536; i++) {
+            m.write(1, i, 1);
+            m.write(2, i, 2);
+        }
 
-        System.out.println("nb reads: " + PhysicalMemory.getNbReads());
-        System.out.println("nb writes:" + PhysicalMemory.getNbWrites());
-
-        m.write(2, 250, 3);
-        m.write(2, 510, 4);
-        m.write(2, 760, 5);
-        m.write(2, 1020, 6);
-        m.write(2, 1200, 7);
-
-        System.out.println("nb reads: " + PhysicalMemory.getNbReads());
-        System.out.println("nb writes:" + PhysicalMemory.getNbWrites());
-
+        for (int i = 0; i < 65536; i++) {
+            int a = m.read(2, i);
+            m.write(1, i, 3);
+            int b = m.read(1, i);
+        }
         // Or invoke the GUI
         //Driver.generateVMtest();
     }
@@ -121,19 +119,45 @@ public class MMU implements MMU_Interface {
     }
 
     private int findAndTakeFreeFrame(int processIdentifier) {
-        // Considerations (part 1)
-        // Locate the next free frame and return it
-        // When there are no more physical frames available, throw an exception
+        // Considerations (part 2)
+        // Do not throw an exception, but select a frame (from processIdentifier) to page out
+        // Use the process list's tail to know which page needs to be paged-out
         if(nextPhysicalFrame >= numberOfPhysicalFrames) {
-            throw new RuntimeException("No free memory frames available!");
+            int pageListLocation = pageListBase.get(processIdentifier);
+            int tail = PhysicalMemory.readByte(pageListLocation + 1);
+            int frameId = PhysicalMemory.readByte(pageListLocation + 2 + tail);
+            int pageTableLocation = pageTableBase.get(processIdentifier) + frameId * 4;
+
+            int frame = PhysicalMemory.readByte(pageTableLocation + 1);
+            int flags = PhysicalMemory.readByte(pageTableLocation);
+            int[] page = getPage(frame);
+
+            if (isFlagSet(flags, FLAG_ON_DISK)) {
+                int diskFrameMsb = PhysicalMemory.readByte(pageTableLocation + 2);
+                int diskFrameLsb = PhysicalMemory.readByte(pageTableLocation + 3);
+                int diskFrame = joinBytes(diskFrameMsb, diskFrameLsb);
+                myPager.pageOut(page, diskFrame);
+            }
+            else {
+                int diskFrame = myPager.pageOut(page);
+                PhysicalMemory.writeByte(pageTableLocation + 2, getMSB(diskFrame));
+                PhysicalMemory.writeByte(pageTableLocation + 3, getLSB(diskFrame));
+                // Update flag
+                flags = setFlag(flags, FLAG_ON_DISK);
+            }
+
+            flags = setFlag(flags, FLAG_INVALID);
+            PhysicalMemory.writeByte(pageTableLocation, flags);
+
+            // Increment tail counter
+            PhysicalMemory.writeByte(pageListLocation + 1, (tail + 1) % PAGE_SIZE);
+
+            return frame;
         }
         else {
             return nextPhysicalFrame++;
         }
 
-        // Considerations (part 2)
-        // Do not throw an exception, but select a frame (from processIdentifier) to page out
-        // Use the process list's tail to know which page needs to be paged-out
 
         // During page-out, don't forget:
         // TLB associations need be removed
@@ -166,12 +190,13 @@ public class MMU implements MMU_Interface {
         // Locate where in memory the page list must go
         int pageListLocation = firstFreeEntryInPageListArea;
         pageListBase.put(processIdentifier, pageListLocation);
-        firstFreeEntryInPageListArea += (int) Math.ceil(memorySize / (double) PAGE_SIZE) + 2;
+        firstFreeEntryInPageListArea += numberOfPhysicalFrames + 2;
 
         // On-demand paging means that memory should not be reserved in this method
         // But all required entries are both "used" and "invalid" since they are not in memory
         for (int i = 0; i < NB_PAGES_IN_PROCESS_ADDRESS_SPACE; i++) {
-            int flags = FLAG_USED | FLAG_INVALID;
+            int flags = FLAG_INVALID;
+            flags = setFlag(flags, FLAG_USED);
 
             int pageAddress = pageTableLocation + i * 4;
             PhysicalMemory.writeByte(pageAddress, flags);
@@ -206,39 +231,55 @@ public class MMU implements MMU_Interface {
         int frame;
 
         // Considerations (part two)
+        int pageTableLocation = pageTableBase.get(processIdentifier) + pageNumber * 4;
+        int pageListLocation = pageListBase.get(processIdentifier);
+        int flags = PhysicalMemory.readByte(pageTableLocation);
+
         // If the page table's entry is marked as invalid AND used, the page is valid but not in memory: must page-in
-        int pageTable = pageTableBase.get(processIdentifier) + pageNumber * 4;
-        int flag = PhysicalMemory.readByte(pageTable);
-        if (isFlagSet(flag, FLAG_INVALID)) {
-            if (isFlagSet(flag, FLAG_USED)) {
+        if (isFlagSet(flags, FLAG_INVALID)) {
+            if (isFlagSet(flags, FLAG_USED)) {
+                // Obtain a free Frame for this page
                 frame = findAndTakeFreeFrame(processIdentifier);
-                flag = removeFlag(flag, FLAG_INVALID);
-                PhysicalMemory.writeByte(pageTable, flag);
-                PhysicalMemory.writeByte(pageTable + 1, frame);
+                PhysicalMemory.writeByte(pageTableLocation + 1, frame);
+
+                if (isFlagSet(flags, FLAG_ON_DISK)) {
+                    // If the page is marked as on disk, load it from disk and into memory
+                    // Update the page's mode (no longer invalid, also mark as dirty if used for a write)
+                    int diskFrameMsb = PhysicalMemory.readByte(pageTableLocation + 2);
+                    int diskFrameLsb = PhysicalMemory.readByte(pageTableLocation + 3);
+                    int diskFrame = joinBytes(diskFrameMsb, diskFrameLsb);
+
+                    replacePage(frame, myPager.pageIn(diskFrame));
+                }
+
+                flags = removeFlag(flags, FLAG_INVALID);
+                if (forWriting) {
+                    flags = setFlag(flags, FLAG_DIRTY);
+                }
+                // Add the page to the page list's head
+                int head = PhysicalMemory.readByte(pageListLocation);
+                PhysicalMemory.writeByte(head + pageListLocation + 2, pageNumber);
+                PhysicalMemory.writeByte(pageListLocation, (head + 1) % PAGE_SIZE);
             } else {
                 throw new RuntimeException("Invalid page");
             }
         }
         else {
-            frame = PhysicalMemory.readByte(pageTable + 1);
+            frame = PhysicalMemory.readByte(pageTableLocation + 1);
         }
 
-        // Obtain a free Frame for this page
-        // Add the page to the page list's head
-        // If the page is marked as on disk, load it from disk and into memory
-        // Update the page's mode (no longer invalid, also mark as dirty if used for a write)
-
+        PhysicalMemory.writeByte(pageTableLocation, flags);
         // If the frame-page association is not in the TLB, you must retrieve it from the page table
         /* Part 1 TLB Stuff
         frame = myTLB.getAssociation(processIdentifier, virtualAddress);
         if(frame == -1) {
-            int pageTable = pageTableBase.get(processIdentifier) + pageNumber * 2;
-            int flag = PhysicalMemory.readByte(pageTable);
+            int pageTableLocation = pageTableBase.get(processIdentifier) + pageNumber * 2;
+            int flags = PhysicalMemory.readByte(pageTableLocation);
             // If the page table's entry is marked as invalid, throw an exception (invalid memory accessed)
-            if (isFlagSet(flag, FLAG_INVALID)) {
+            if (isFlagSet(flags, FLAG_INVALID)) {
                 throw new RuntimeException("Trying to access an invalid frame");
             }
-            frame = PhysicalMemory.readByte(pageTable + 1);
+            frame = PhysicalMemory.readByte(pageTableLocation + 1);
 
             // Update the TLB association
             myTLB.setAssociation(processIdentifier, virtualAddress, frame);
@@ -273,15 +314,20 @@ public class MMU implements MMU_Interface {
 
     @Override
     public int[] getPage(int frameNumber) {
-        //TODO: implement this method
         // Just read the specified frame from memory and return it
-        return null;
+        int[] data = new int[PAGE_SIZE];
+        for (int i = 0; i < PAGE_SIZE; i++) {
+            data[i] = PhysicalMemory.readByte(frameNumber + i);
+        }
+        return data;
     }
 
     @Override
     public void replacePage(int frameNumber, int[] replacementPage) {
-        //TODO: implement this method
         // Just write into memory the replacement Page received
+        for (int i = 0; i < replacementPage.length; i++) {
+            PhysicalMemory.writeByte(frameNumber + i, replacementPage[i]);
+        }
     }
 
 }

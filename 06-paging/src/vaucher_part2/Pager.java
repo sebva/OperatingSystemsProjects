@@ -1,7 +1,10 @@
 package vaucher_part2;
 
 import provided.Disk;
+import provided.MMU_Interface;
 import provided.PagerInterface;
+
+import java.util.Arrays;
 
 public class Pager implements PagerInterface {
 	private Disk disk;
@@ -10,15 +13,26 @@ public class Pager implements PagerInterface {
 	/* total number of frames in the disk */
 	private final int totalFrames;
 
+	public Pager(Disk disk) {
+        this.disk = disk;
+		// Calculate frames in disk
+		totalFrames = disk.getDiskSize() / MMU_Interface.PAGE_SIZE;
+		// Set up next available frame in disk
+		nextFreeFrame = 0;
+	}
+
 	private int getFreePage() {
-		// TODO: implement acquiring the next available disk frame
 		// Throw an exception if the disk is full
-		throw new RuntimeException("getFreePage: not implemented");
+		if (nextFreeFrame >= totalFrames) {
+            throw new RuntimeException("The disk is full");
+        }
+
+        return nextFreeFrame ++;
 	}
 
 	public int pageOut(int[] data, int diskFrame) {
-		//TODO: implement paging-out
 		// Store the received data array into the corresponding disk frame
+        disk.setByteArray(diskFrame, MMU_Interface.PAGE_SIZE, data);
 		return diskFrame;
 	}
 
@@ -26,16 +40,22 @@ public class Pager implements PagerInterface {
 		return pageOut(data, getFreePage());
 	}
 
-	public int[] pageIn(int frame) {
-		//TODO: implement page-in
+	public int[] pageIn(int diskFrame) {
 		// Read from the disk the corresponding frame and return it
-		return null;
+        return disk.getByteArray(diskFrame, MMU_Interface.PAGE_SIZE);
 	}
 
-	public Pager(Disk disk) {
-		//TODO: initialize pager
-		// Calculate frames in disk
-		// Set up next available frame in disk
-		totalFrames = -1;
-	}
+    public static void main(String[] args) {
+        Pager pager = new Pager(new Disk(10000));
+        int[] tab = new int[256];
+        for (int i = 0; i < 256; i++) {
+            tab[i] = i;
+        }
+        pager.pageOut(tab);
+        int adr = pager.pageOut(tab);
+        int[] data = pager.pageIn(adr);
+        if(!Arrays.equals(tab, data)) {
+            System.err.println("Pager broken");
+        }
+    }
 }
